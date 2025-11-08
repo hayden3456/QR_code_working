@@ -1,0 +1,6 @@
+Flask==2.3.3
+gradio-client==0.7.0
+Pillow==10.0.1
+langchain==0.0.350
+openai==0.28.1
+

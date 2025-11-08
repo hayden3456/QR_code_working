@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #f3e9d2;
+      color: #3e3e3e;
+    }
+
+    #inputForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    label {
+      font-size: 1.2em;
+      margin-bottom: 0.5em;
+    }
+
+    input {
+      font-size: 1.1em;
+      margin-bottom: 1.5em;
+      padding: 0.3em;
+      border: 2px solid #3e3e3e;
+      background-color: #f3e9d2;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 0.5em;
+      border: 2px solid #3e3e3e;
+      background-color: #3e3e3e;
+      color: #f3e9d2;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #f3e9d2;
+      color: #3e3e3e;
+    }
+
+    img {
+      max-width: 100%;
+      border: 4px solid #3e3e3e;
+      margin-top: 1em;
+    }
+    #loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    .loader {
+    border: 8px solid #f3e9d2;
+    border-top: 8px solid #3e3e3e;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+    }
+
+    #resultImage {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    }
+    
+    #redoContainer {
+    text-align: center;
+    }
+
+  </style>
+</head>
+<body>
+  <form id="inputForm">
+    <label for="text1">URL:</label>
+    <input type="text" id="text1" name="text1">
+    <label for="text2">Industry:</label>
+    <input type="text" id="text2" name="text2">
+    <button type="submit">Submit</button>
+    <div id="loading" style="display:none;">
+        <div class="loader"></div>
+    </div>
+  </form>
+  <img id="resultImage" src="" alt="Result image" style="display:none;">
+  <div id="redoContainer" style="display:none;">
+    <button id="redo">Redo</button>
+    <button id="download">Download</button>
+  </div>
+  <script>
+
+var formData;
+
+$("#inputForm").submit(function(event) {
+  event.preventDefault();
+  formData = $(this).serialize();
+  $("#loading").show();
+  $.ajax({
+    url: "/api",
+    type: "POST",
+    data: formData,
+    success: function(response) {
+      var imgData = "data:image/png;base64," + response.ImageBytes;
+      $("#resultImage").attr("src", imgData).show();
+      $("#redoContainer").show();
+      $("#loading").hide();
+    }
+  });
+});
+
+$("#redo").click(function() {
+  $("#loading").show();
+  $.ajax({
+    url: "/api",
+    type: "POST",
+    data: formData,
+    success: function(response) {
+      var imgData = "data:image/png;base64," + response.ImageBytes;
+      $("#resultImage").attr("src", imgData).show();
+      $("#redoContainer").show();
+      $("#loading").hide();
+    }
+  });
+});
+
+async function downloadImage(imageSrc) {
+  const image = await fetch(imageSrc);
+  const imageBlog = await image.blob();
+  const imageURL = URL.createObjectURL(imageBlog);
+  const link = document.createElement("a");
+  link.href = imageURL;
+  link.download = "generated_image.png";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+$("#download").click(function() {
+  const imageSrc = $("#resultImage").attr("src");
+  downloadImage(imageSrc);
+});
+
+
+  </script>
+</body>
+</html>
