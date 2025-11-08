@@ -143,8 +143,8 @@ $("#redo").click(function() {
 
 async function downloadImage(imageSrc) {
   const image = await fetch(imageSrc);
-  const imageBlog = await image.blob();
-  const imageURL = URL.createObjectURL(imageBlog);
+  const imageBlob = await image.blob();
+  const imageURL = URL.createObjectURL(imageBlob);
   const link = document.createElement("a");
   link.href = imageURL;
   link.download = "generated_image.png";
