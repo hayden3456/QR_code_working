@@ -87,19 +87,32 @@
     text-align: center;
     }
 
+    #errorMessage {
+      color: #d32f2f;
+      background-color: #ffebee;
+      border: 2px solid #d32f2f;
+      padding: 1em;
+      margin: 1em 0;
+      border-radius: 4px;
+      display: none;
+      max-width: 500px;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
   <form id="inputForm">
     <label for="text1">URL:</label>
-    <input type="text" id="text1" name="text1">
+    <input type="text" id="text1" name="text1" required>
     <label for="text2">Industry:</label>
-    <input type="text" id="text2" name="text2">
+    <input type="text" id="text2" name="text2" required maxlength="200">
     <button type="submit">Submit</button>
     <div id="loading" style="display:none;">
         <div class="loader"></div>
     </div>
   </form>
+  <div id="errorMessage"></div>
   <img id="resultImage" src="" alt="Result image" style="display:none;">
   <div id="redoContainer" style="display:none;">
     <button id="redo">Redo</button>
@@ -109,36 +122,92 @@
 
 var formData;
 
-$("#inputForm").submit(function(event) {
-  event.preventDefault();
-  formData = $(this).serialize();
+function showError(message) {
+  $("#errorMessage").text(message).show();
+  $("#resultImage").hide();
+  $("#redoContainer").hide();
+}
+
+function hideError() {
+  $("#errorMessage").hide();
+}
+
+function makeApiRequest(data) {
+  hideError();
   $("#loading").show();
-  $.ajax({
+  
+  return $.ajax({
     url: "/api",
     type: "POST",
-    data: formData,
+    data: data,
+    timeout: 120000, // 2 minutes timeout for image generation
     success: function(response) {
-      var imgData = "data:image/png;base64," + response.ImageBytes;
-      $("#resultImage").attr("src", imgData).show();
-      $("#redoContainer").show();
+      if (response.error) {
+        showError(response.error);
+        $("#loading").hide();
+      } else if (response.ImageBytes) {
+        var imgData = "data:image/png;base64," + response.ImageBytes;
+        $("#resultImage").attr("src", imgData).show();
+        $("#redoContainer").show();
+        $("#loading").hide();
+      } else {
+        showError("Unexpected response from server");
+        $("#loading").hide();
+      }
+    },
+    error: function(xhr, status, error) {
       $("#loading").hide();
+      var errorMsg = "An error occurred while generating the QR code.";
+      
+      if (status === "timeout") {
+        errorMsg = "Request timed out. The image generation is taking too long. Please try again.";
+      } else if (xhr.responseJSON && xhr.responseJSON.error) {
+        errorMsg = xhr.responseJSON.error;
+      } else if (xhr.status === 0) {
+        errorMsg = "Unable to connect to the server. Please check your connection and try again.";
+      } else if (xhr.status >= 500) {
+        errorMsg = "Server error. Please try again later.";
+      } else if (xhr.status === 400) {
+        errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Invalid request. Please check your inputs.";
+      }
+      
+      showError(errorMsg);
     }
   });
+}
+
+$("#inputForm").submit(function(event) {
+  event.preventDefault();
+  
+  // Client-side validation
+  var url = $("#text1").val().trim();
+  var industry = $("#text2").val().trim();
+  
+  if (!url) {
+    showError("URL field cannot be empty");
+    return;
+  }
+  
+  if (!industry) {
+    showError("Industry field cannot be empty");
+    return;
+  }
+  
+  if (industry.length > 200) {
+    showError("Industry field must be 200 characters or less");
+    return;
+  }
+  
+  formData = $(this).serialize();
+  makeApiRequest(formData);
 });
 
 $("#redo").click(function() {
-  $("#loading").show();
-  $.ajax({
-    url: "/api",
-    type: "POST",
-    data: formData,
-    success: function(response) {
-      var imgData = "data:image/png;base64," + response.ImageBytes;
-      $("#resultImage").attr("src", imgData).show();
-      $("#redoContainer").show();
-      $("#loading").hide();
-    }
-  });
+  if (!formData) {
+    showError("No previous request to redo");
+    return;
+  }
+  makeApiRequest(formData);
 });
 
 async function downloadImage(imageSrc) {
