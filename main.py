@@ -6,10 +6,14 @@ from base64 import encodebytes
 from langchain.llms import OpenAI 
 import os
 import random
+import logging  # New import for logging
 
 import sys  # For printing to terminal
 
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler(sys.stderr)])
 
 @app.route('/')
 def index():
@@ -19,6 +23,9 @@ def index():
 def api():
     text1 = request.form['text1']
     text2 = request.form['text2']
+
+    # Log incoming request data
+    logging.info(f'Received request with text1: {text1} and text2: {text2}')
 
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -31,23 +38,27 @@ def api():
     ai_prompt = llm(prompt)
     ai_prompt += ", 8k high quality"
 
-    print(ai_prompt, file=sys.stderr)
+    # Log generated AI prompt
+    logging.info(f'Generated AI prompt: {ai_prompt}')
 
     ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility 
 
     client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
     result = client.predict(
-    "DreamShaper",	# str  in 'Model' Radio component
-    text1,	# str  in 'QR Code Data' Textbox component
+    "DreamShaper",\t# str  in 'Model' Radio component
+    text1,\t# str  in 'QR Code Data' Textbox component
     ai_prompt, # str  in 'Prompt' Textbox component
-    "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
-    100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
-    9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
-    0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
-    0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
-    ran_num,	# int | float  in 'Seed' Number component
+    "logo, watermark, signature, text, BadDream, UnrealisticDream",\t# str  in 'Negative Prompt' Textbox component
+    100,\t# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
+    9,\t# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
+    0.17,\t# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
+    0.44,\t# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
+    ran_num,\t# int | float  in 'Seed' Number component
     api_name="/predict"
     )
+
+    # Log the response from the client
+    logging.info(f'Response from gradio client: {result}')
 
     def get_response_image(pil_img):
         """Convert PIL Image to base64 encoded string."""
@@ -61,10 +72,8 @@ def api():
         encoded_img = get_response_image(pil_img)
         return jsonify({'ImageBytes': encoded_img})
     except Exception as e:
-        print(f"Error processing image: {e}", file=sys.stderr)
+        logging.error(f"Error processing image: {e}")
         return jsonify({'error': 'Failed to process generated image'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
