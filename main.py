@@ -18,7 +18,7 @@ def index():
 @app.route('/api', methods=['POST'])
 def api():
     text1 = request.form['text1']
-    text2 = request.form['text2']
+    text2 = request.form.get('text2', 'general')  # Set default industry to 'general'
 
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -66,5 +66,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
