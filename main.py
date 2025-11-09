@@ -3,7 +3,7 @@ from gradio_client import Client
 from PIL import Image
 import io
 from base64 import encodebytes
-from langchain.llms import OpenAI 
+from langchain.llms import OpenAI
 import os
 import random
 
@@ -25,7 +25,12 @@ def api():
     if not api_key:
         return jsonify({'error': 'OPENAI_API_KEY environment variable not set'}), 500
 
-    llm = OpenAI(temperature=0.7, openai_api_key=api_key) # initializes an AI model that will be used to come up with questions
+    # Get number of inference steps from environment variable or use default
+    inference_steps = int(os.environ.get('INFERENCE_STEPS', 100))
+    if not (10 <= inference_steps <= 400):
+        return jsonify({'error': 'INFERENCE_STEPS must be between 10 and 400'}), 500
+
+    llm = OpenAI(temperature=0.7, openai_api_key=api_key)  # initializes an AI model that will be used to come up with questions
     prompt = "You are helping to make ultra simple AI generated images for companies by providing a prompt that makes elegant cartoon like images that matches their brand. You should get creative and make abstract or otherwise eye-catching requests. You should NEVER include people, faces, or people in work clothes in the prompt. The company you are making the request for is in this industry: \n"
     prompt += text2
     ai_prompt = llm(prompt)
@@ -33,7 +38,7 @@ def api():
 
     print(ai_prompt, file=sys.stderr)
 
-    ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility 
+    ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility
 
     client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
     result = client.predict(
@@ -41,7 +46,7 @@ def api():
     text1,	# str  in 'QR Code Data' Textbox component
     ai_prompt, # str  in 'Prompt' Textbox component
     "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
-    100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
+    inference_steps,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
     9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
     0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
     0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
@@ -66,5 +71,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
