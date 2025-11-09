@@ -17,8 +17,11 @@ def index():
 
 @app.route('/api', methods=['POST'])
 def api():
-    text1 = request.form['text1']
-    text2 = request.form['text2']
+    text1 = request.form.get('text1')
+    text2 = request.form.get('text2')
+
+    if not text1 or not text2:
+        return jsonify({'error': 'Both text1 and text2 inputs are required'}), 400
 
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -66,5 +69,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
