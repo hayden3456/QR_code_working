@@ -25,6 +25,9 @@ def api():
     if not api_key:
         return jsonify({'error': 'OPENAI_API_KEY environment variable not set'}), 500
 
+    # Get inference steps from environment variable or use default
+    inference_steps = int(os.environ.get('INFERENCE_STEPS', 100))
+
     llm = OpenAI(temperature=0.7, openai_api_key=api_key) # initializes an AI model that will be used to come up with questions
     prompt = "You are helping to make ultra simple AI generated images for companies by providing a prompt that makes elegant cartoon like images that matches their brand. You should get creative and make abstract or otherwise eye-catching requests. You should NEVER include people, faces, or people in work clothes in the prompt. The company you are making the request for is in this industry: \n"
     prompt += text2
@@ -37,15 +40,15 @@ def api():
 
     client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
     result = client.predict(
-    "DreamShaper",	# str  in 'Model' Radio component
-    text1,	# str  in 'QR Code Data' Textbox component
+    "DreamShaper",    # str  in 'Model' Radio component
+    text1,    # str  in 'QR Code Data' Textbox component
     ai_prompt, # str  in 'Prompt' Textbox component
-    "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
-    100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
-    9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
-    0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
-    0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
-    ran_num,	# int | float  in 'Seed' Number component
+    "logo, watermark, signature, text, BadDream, UnrealisticDream",    # str  in 'Negative Prompt' Textbox component
+    inference_steps,    # int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
+    9,    # int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
+    0.17,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
+    0.44,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
+    ran_num,    # int | float  in 'Seed' Number component
     api_name="/predict"
     )
 
@@ -66,5 +69,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
