@@ -35,7 +35,9 @@ def api():
 
     ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility 
 
-    client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
+    # Use environment variable for client endpoint
+    client_endpoint = os.environ.get('CLIENT_ENDPOINT', 'https://hjconstas-qrcode-diffusion.hf.space/')
+    client = Client(client_endpoint)
     result = client.predict(
     "DreamShaper",	# str  in 'Model' Radio component
     text1,	# str  in 'QR Code Data' Textbox component
@@ -66,5 +68,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
