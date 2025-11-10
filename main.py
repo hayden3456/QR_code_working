@@ -37,15 +37,15 @@ def api():
 
     client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
     result = client.predict(
-    "DreamShaper",	# str  in 'Model' Radio component
-    text1,	# str  in 'QR Code Data' Textbox component
+    "DreamShaper",    # str  in 'Model' Radio component
+    text1,    # str  in 'QR Code Data' Textbox component
     ai_prompt, # str  in 'Prompt' Textbox component
-    "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
-    100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
-    9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
-    0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
-    0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
-    ran_num,	# int | float  in 'Seed' Number component
+    "logo, watermark, signature, text, BadDream, UnrealisticDream",    # str  in 'Negative Prompt' Textbox component
+    100,    # int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
+    9,    # int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
+    0.17,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
+    0.44,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
+    ran_num,    # int | float  in 'Seed' Number component
     api_name="/predict"
     )
 
@@ -60,11 +60,13 @@ def api():
         pil_img = Image.open(result)
         encoded_img = get_response_image(pil_img)
         return jsonify({'ImageBytes': encoded_img})
+    except IOError as e:
+        # Log specific error for invalid image format
+        print(f"Invalid image format: {e}", file=sys.stderr)
+        return jsonify({'error': 'Generated result is not a valid image format'}), 500
     except Exception as e:
         print(f"Error processing image: {e}", file=sys.stderr)
         return jsonify({'error': 'Failed to process generated image'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
