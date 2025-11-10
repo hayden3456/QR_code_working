@@ -19,6 +19,7 @@ def index():
 def api():
     text1 = request.form['text1']
     text2 = request.form['text2']
+    image_format = request.form.get('format', 'PNG').upper()
 
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -49,16 +50,16 @@ def api():
     api_name="/predict"
     )
 
-    def get_response_image(pil_img):
-        """Convert PIL Image to base64 encoded string."""
+    def get_response_image(pil_img, format):
+        """Convert PIL Image to base64 encoded string in specified format."""
         byte_arr = io.BytesIO()
-        pil_img.save(byte_arr, format='PNG')
+        pil_img.save(byte_arr, format=format)
         encoded_img = encodebytes(byte_arr.getvalue()).decode('ascii')
         return encoded_img
 
     try:
         pil_img = Image.open(result)
-        encoded_img = get_response_image(pil_img)
+        encoded_img = get_response_image(pil_img, image_format)
         return jsonify({'ImageBytes': encoded_img})
     except Exception as e:
         print(f"Error processing image: {e}", file=sys.stderr)
@@ -66,5 +67,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
