@@ -1,45 +1,37 @@
-# QR Code Generator with AI-Generated Images
+## Logging for API Requests and Responses
 
-A Flask web application that generates QR codes with AI-generated artistic designs based on company industry information.
+This application now includes logging for API requests and responses to enhance traceability and debugging. Logging is configured to output at the INFO level, capturing key events such as the generation of AI prompts, API request details, and the success or failure of image processing.
 
-## Features
+### Enabling Logging
 
-- Generate QR codes with custom URLs
-- AI-powered image generation based on industry type
-- Elegant cartoon-like designs that match brand aesthetics
-- Download generated QR code images
+Logging is enabled by default. The logs are printed to the standard output, which can be redirected to a file if needed.
 
-## Setup
+### Example Log Entries
 
-1. Install dependencies:
+- **Generated AI Prompt**: Logs the AI prompt generated for image creation.
+  ```
+  INFO:root:Generated AI prompt: <prompt details>
+  ```
+
+- **API Request Details**: Logs the details of the API request, including the seed used.
+  ```
+  INFO:root:API request sent with seed: <seed number>
+  ```
+
+- **Successful Image Processing**: Logs when an image is processed successfully.
+  ```
+  INFO:root:Image processed successfully
+  ```
+
+- **Error in Image Processing**: Logs any errors encountered during image processing.
+  ```
+  ERROR:root:Error processing image: <error details>
+  ```
+
+### Viewing Logs
+
+To view the logs, ensure your application is running and check the console output. If you wish to save logs to a file, you can redirect the standard output to a file using shell redirection.
+
 ```bash
-pip install -r requirements.txt
+python main.py > app.log 2>&1
 ```
-
-2. Set up environment variables:
-```bash
-export OPENAI_API_KEY=your_api_key_here
-```
-
-3. Run the application:
-```bash
-python main.py
-```
-
-4. Open your browser and navigate to `http://localhost:5000`
-
-## Usage
-
-1. Enter a URL in the "URL" field
-2. Enter the industry type in the "Industry" field
-3. Click "Submit" to generate your QR code
-4. Use "Redo" to generate a new variation
-5. Use "Download" to save the image
-
-## Technologies
-
-- Flask - Web framework
-- OpenAI (LangChain) - AI prompt generation
-- Gradio Client - Image generation
-- PIL/Pillow - Image processing
-
