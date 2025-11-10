@@ -20,6 +20,10 @@ def api():
     text1 = request.form['text1']
     text2 = request.form['text2']
 
+    # Validate text length
+    if not validate_text_length(text1, text2):
+        return jsonify({'error': 'Input text is too long. The maximum allowed length is 200 characters.'}), 400
+
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
     if not api_key:
@@ -37,15 +41,15 @@ def api():
 
     client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
     result = client.predict(
-    "DreamShaper",	# str  in 'Model' Radio component
-    text1,	# str  in 'QR Code Data' Textbox component
+    "DreamShaper",    # str  in 'Model' Radio component
+    text1,    # str  in 'QR Code Data' Textbox component
     ai_prompt, # str  in 'Prompt' Textbox component
-    "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
-    100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
-    9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
-    0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
-    0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
-    ran_num,	# int | float  in 'Seed' Number component
+    "logo, watermark, signature, text, BadDream, UnrealisticDream",    # str  in 'Negative Prompt' Textbox component
+    100,    # int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
+    9,    # int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
+    0.17,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
+    0.44,    # int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
+    ran_num,    # int | float  in 'Seed' Number component
     api_name="/predict"
     )
 
@@ -64,7 +68,17 @@ def api():
         print(f"Error processing image: {e}", file=sys.stderr)
         return jsonify({'error': 'Failed to process generated image'}), 500
 
+
+def validate_text_length(text1, text2, max_length=200):
+    """
+    Validates that the combined length of text1 and text2 does not exceed a maximum allowed length.
+
+    :param text1: First text input
+    :param text2: Second text input
+    :param max_length: Maximum allowed combined length of the texts
+    :return: True if combined length is within the limit, False otherwise
+    """
+    return len(text1) + len(text2) <= max_length
+
 if __name__ == '__main__':
     app.run(debug=True)
-
-
