@@ -25,6 +25,10 @@ def api():
     if not api_key:
         return jsonify({'error': 'OPENAI_API_KEY environment variable not set'}), 500
 
+    # Validate API key length
+    if len(api_key) != 32:
+        return jsonify({'error': 'Invalid OPENAI_API_KEY length'}), 400
+
     llm = OpenAI(temperature=0.7, openai_api_key=api_key) # initializes an AI model that will be used to come up with questions
     prompt = "You are helping to make ultra simple AI generated images for companies by providing a prompt that makes elegant cartoon like images that matches their brand. You should get creative and make abstract or otherwise eye-catching requests. You should NEVER include people, faces, or people in work clothes in the prompt. The company you are making the request for is in this industry: \n"
     prompt += text2
@@ -66,5 +70,3 @@ def api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
