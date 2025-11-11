@@ -6,8 +6,12 @@ from base64 import encodebytes
 from langchain.llms import OpenAI 
 import os
 import random
+import logging
 
 import sys  # For printing to terminal
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -20,9 +24,13 @@ def api():
     text1 = request.form['text1']
     text2 = request.form['text2']
 
+    # Log the request data
+    logging.info('Received API request with text1: %s, text2: %s', text1, text2)
+
     # Get API key from environment variable
     api_key = os.environ.get('OPENAI_API_KEY')
     if not api_key:
+        logging.error('OPENAI_API_KEY environment variable not set')
         return jsonify({'error': 'OPENAI_API_KEY environment variable not set'}), 500
 
     llm = OpenAI(temperature=0.7, openai_api_key=api_key) # initializes an AI model that will be used to come up with questions
@@ -31,7 +39,7 @@ def api():
     ai_prompt = llm(prompt)
     ai_prompt += ", 8k high quality"
 
-    print(ai_prompt, file=sys.stderr)
+    logging.info('Generated AI prompt: %s', ai_prompt)
 
     ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility 
 
@@ -59,12 +67,11 @@ def api():
     try:
         pil_img = Image.open(result)
         encoded_img = get_response_image(pil_img)
+        logging.info('Successfully processed generated image')
         return jsonify({'ImageBytes': encoded_img})
     except Exception as e:
-        print(f"Error processing image: {e}", file=sys.stderr)
+        logging.error('Error processing image: %s', e)
         return jsonify({'error': 'Failed to process generated image'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
