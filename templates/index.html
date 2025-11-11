@@ -120,20 +120,20 @@
   </div>
   <script>
 
-var formData;
+var previousFormData;
 
-function showError(message) {
+function displayErrorMessage(message) {
   $("#errorMessage").text(message).show();
   $("#resultImage").hide();
   $("#redoContainer").hide();
 }
 
-function hideError() {
+function clearErrorMessage() {
   $("#errorMessage").hide();
 }
 
-function makeApiRequest(data) {
-  hideError();
+function submitQrGenerationRequest(data) {
+  clearErrorMessage();
   $("#loading").show();
   
   return $.ajax({
@@ -143,7 +143,7 @@ function makeApiRequest(data) {
     timeout: 120000, // 2 minutes timeout for image generation
     success: function(response) {
       if (response.error) {
-        showError(response.error);
+        displayErrorMessage(response.error);
         $("#loading").hide();
       } else if (response.ImageBytes) {
         var imgData = "data:image/png;base64," + response.ImageBytes;
@@ -151,7 +151,7 @@ function makeApiRequest(data) {
         $("#redoContainer").show();
         $("#loading").hide();
       } else {
-        showError("Unexpected response from server");
+        displayErrorMessage("Unexpected response from server");
         $("#loading").hide();
       }
     },
@@ -171,7 +171,7 @@ function makeApiRequest(data) {
         errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Invalid request. Please check your inputs.";
       }
       
-      showError(errorMsg);
+      displayErrorMessage(errorMsg);
     }
   });
 }
@@ -184,33 +184,33 @@ $("#inputForm").submit(function(event) {
   var industry = $("#text2").val().trim();
   
   if (!url) {
-    showError("URL field cannot be empty");
+    displayErrorMessage("URL field cannot be empty");
     return;
   }
   
   if (!industry) {
-    showError("Industry field cannot be empty");
+    displayErrorMessage("Industry field cannot be empty");
     return;
   }
   
   if (industry.length > 200) {
-    showError("Industry field must be 200 characters or less");
+    displayErrorMessage("Industry field must be 200 characters or less");
     return;
   }
   
-  formData = $(this).serialize();
-  makeApiRequest(formData);
+  previousFormData = $(this).serialize();
+  submitQrGenerationRequest(previousFormData);
 });
 
 $("#redo").click(function() {
-  if (!formData) {
-    showError("No previous request to redo");
+  if (!previousFormData) {
+    displayErrorMessage("No previous request to redo");
     return;
   }
-  makeApiRequest(formData);
+  submitQrGenerationRequest(previousFormData);
 });
 
-async function downloadImage(imageSrc) {
+async function downloadQrCodeImage(imageSrc) {
   const image = await fetch(imageSrc);
   const imageBlob = await image.blob();
   const imageURL = URL.createObjectURL(imageBlob);
@@ -224,7 +224,7 @@ async function downloadImage(imageSrc) {
 
 $("#download").click(function() {
   const imageSrc = $("#resultImage").attr("src");
-  downloadImage(imageSrc);
+  downloadQrCodeImage(imageSrc);
 });
 
 

@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-def validate_url(url_string):
-    """Validate if the input string is a valid URL."""
+def is_valid_url_format(url_string):
+    """Validate if the input string is a valid URL format."""
     try:
         result = urlparse(url_string)
         # Check if it has at least a scheme or netloc
@@ -25,7 +25,7 @@ def validate_url(url_string):
     except Exception:
         return len(url_string.strip()) > 0
 
-def get_response_image(pil_img):
+def encode_image_to_base64(pil_img):
     """Convert PIL Image to base64 encoded string."""
     byte_arr = io.BytesIO()
     pil_img.save(byte_arr, format='PNG')
@@ -37,32 +37,32 @@ def index():
     return render_template('index.html')
 
 @app.route('/api', methods=['POST'])
-def api():
+def generate_qr_code():
     try:
         # Validate request has required fields
         if 'text1' not in request.form or 'text2' not in request.form:
             logger.warning("Missing required form fields")
             return jsonify({'error': 'Missing required fields: text1 (URL) and text2 (Industry) are required'}), 400
         
-        text1 = request.form['text1'].strip()
-        text2 = request.form['text2'].strip()
+        qr_code_data = request.form['text1'].strip()
+        industry_description = request.form['text2'].strip()
         
         # Validate inputs are not empty
-        if not text1:
+        if not qr_code_data:
             logger.warning("Empty URL field")
             return jsonify({'error': 'URL field cannot be empty'}), 400
         
-        if not text2:
+        if not industry_description:
             logger.warning("Empty Industry field")
             return jsonify({'error': 'Industry field cannot be empty'}), 400
         
         # Validate URL format (basic validation - QR codes can contain any text)
-        if not validate_url(text1):
-            logger.warning(f"Invalid URL format: {text1}")
+        if not is_valid_url_format(qr_code_data):
+            logger.warning(f"Invalid URL format: {qr_code_data}")
             # Note: We still allow it since QR codes can encode any text
         
         # Validate industry field length
-        if len(text2) > 200:
+        if len(industry_description) > 200:
             logger.warning("Industry field too long")
             return jsonify({'error': 'Industry field must be 200 characters or less'}), 400
 
@@ -72,12 +72,12 @@ def api():
             logger.error("OPENAI_API_KEY not set")
             return jsonify({'error': 'OPENAI_API_KEY environment variable not set'}), 500
 
-        logger.info(f"Generating QR code for URL: {text1[:50]}... in industry: {text2}")
+        logger.info(f"Generating QR code for URL: {qr_code_data[:50]}... in industry: {industry_description}")
         
         # Generate AI prompt
         llm = OpenAI(temperature=0.7, openai_api_key=api_key)
         prompt = "You are helping to make ultra simple AI generated images for companies by providing a prompt that makes elegant cartoon like images that matches their brand. You should get creative and make abstract or otherwise eye-catching requests. You should NEVER include people, faces, or people in work clothes in the prompt. The company you are making the request for is in this industry: \n"
-        prompt += text2
+        prompt += industry_description
         
         try:
             ai_prompt = llm(prompt)
@@ -87,22 +87,22 @@ def api():
             logger.error(f"Error generating AI prompt: {e}")
             return jsonify({'error': 'Failed to generate AI prompt. Please check your OpenAI API key and try again.'}), 500
 
-        ran_num = int(random.random() * 100)  # Generate integer seed for reproducibility 
-        logger.info(f"Using seed: {ran_num}")
+        generation_seed = int(random.random() * 100)  # Generate integer seed for reproducibility 
+        logger.info(f"Using seed: {generation_seed}")
 
         # Generate QR code image
         try:
             client = Client("https://hjconstas-qrcode-diffusion.hf.space/")
             result = client.predict(
                 "DreamShaper",	# str  in 'Model' Radio component
-                text1,	# str  in 'QR Code Data' Textbox component
+                qr_code_data,	# str  in 'QR Code Data' Textbox component
                 ai_prompt, # str  in 'Prompt' Textbox component
                 "logo, watermark, signature, text, BadDream, UnrealisticDream",	# str  in 'Negative Prompt' Textbox component
                 100,	# int | float (numeric value between 10 and 400) in 'Number of Inference Steps' Slider component
                 9,	# int | float (numeric value between 1 and 20) in 'Guidance Scale' Slider component
                 0.17,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Tile' Slider component
                 0.44,	# int | float (numeric value between 0.0 and 1.0) in 'Controlnet Conditioning Brightness' Slider component
-                ran_num,	# int | float  in 'Seed' Number component
+                generation_seed,	# int | float  in 'Seed' Number component
                 api_name="/predict"
             )
         except Exception as e:
@@ -112,7 +112,7 @@ def api():
         # Process and encode image
         try:
             pil_img = Image.open(result)
-            encoded_img = get_response_image(pil_img)
+            encoded_img = encode_image_to_base64(pil_img)
             logger.info("Successfully generated and encoded QR code image")
             return jsonify({'ImageBytes': encoded_img})
         except Exception as e:
